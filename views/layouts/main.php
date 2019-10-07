@@ -46,15 +46,16 @@ AppAsset::register($this);
             'items' => [
                 ['label' => 'Home', 'url' => ['/site/index']],
                 ['label' => 'Mata Kuliah', 'url' => ['/mata-kuliah']],
-                // [
-                //     'label' => 'Data Master',
-                //     'items' => [
-                //          ['label' => 'Mata Kuliah', 'url' => 'index.php?r=mata-kuliah'],
-                //         //  ['label' => 'Clustering', 'url' => 'index.php?r=clusterring'],
-                //     ],
-                // ],
+                
                 ['label' => 'Mahasiswa', 'url' => ['/mahasiswa']],
-                ['label' => 'Fuzzy & C-Means', 'url' => ['/nilai/proses']],
+                [
+                    'label' => 'Fuzzy & C-Means',
+                    'items' => [
+                         ['label' => 'Statis', 'url' => 'index.php?r=cluster/proses-default'],
+                         ['label' => 'Dinamis', 'url' => 'index.php?r=cluster/proses'],
+                    ],
+                ],
+                // ['label' => 'Fuzzy & C-Means', 'url' => ['/nilai/proses']],
                 // ['label' => 'About', 'url' => ['/site/contact']],
 
             ],

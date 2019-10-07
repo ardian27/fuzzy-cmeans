@@ -35,8 +35,9 @@ $data = array(
     array(78, 72, 80, 85, 78, 98, 76, 80, 90, 76),
     array(89, 82, 80, 85, 78, 98, 76, 80, 90, 87),
     array(98, 92, 80, 85, 78, 98, 76, 80, 90, 69),
-    array(78, 52, 80, 85, 78, 98, 76, 80, 90, 98), 
+    array(78, 52, 80, 85, 78, 98, 76, 80, 90, 98),
 );
+ 
 
 $nilai = Nilai::find()
     ->select('nim, nilai')
@@ -70,7 +71,7 @@ $clusterizer = new CMeansClusterizer(
     $result,
     // $result,
     2,
-    10000,
+    1,
     2,
     0.0001
 );
@@ -124,8 +125,8 @@ print_r($datafix);
                 // $data1 = array_push($data1, $nilai[0]);
                 // $data2 = array_push($data2, $nilai[1]);
 
-                echo 
-                '
+                echo
+                    '
                 <tr>
                     <td>' . $mhs['nama'] . '</td>
                     <td > ' . $key . '</td>
@@ -236,12 +237,41 @@ class CMeansClusterizer
     {
         $this->features = array_keys(reset($this->data));
         $this->membership_degrees = [];
+// Set default random
+        $random =
+            array(
+                array(0.29577746, 0.652474909),
+                array(0.31092804, 0.63042153),
+                array(0.847623419, 0.874752239),
+                array(0.640273246, 0.476969312),
+                array(0.107983508, 0.443396592),
+                array(0.322318455, 0.33724277),
+                array(0.28990888, 0.484101261),
+                array(0.258404794, 0.26402353),
+                array(0.144194858, 0.78754531),
+                array(0.348093005, 0.424089387),
+                array(0.326775713, 0.689630036),
+                array(0.670358567, 0.33600463),
+                array(0.516008065, 0.902469843),
+                array(0.976116825, 0.715514758),
+                array(0.281001031, 0.236882699),
+                array(0.01248748, 0.322992958),
+                array(0.891421086, 0.993397719),
+                array(0.658018897, 0.272374262),
+                array(0.48874923, 0.432460316),
+                array(0.322318455, 0.33724277),
+            );
+            
+
         foreach ($this->data as $key => $value) {
             $this->membership_degrees[$key] = [];
             for ($i = 0; $i < $this->n_clusters; ++$i) {
                 $this->membership_degrees[$key][$i] = rand(0, 10) / 10;
             }
         }
+        // print_r();
+        print("<pre> " . print_r($this->membership_degrees, true) . "</pre>");
+
     }
     private function compute_centroids()
     {

@@ -6,7 +6,7 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $model app\models\Cluster */
 /* @var $form yii\widgets\ActiveForm */
-print("<pre>Proses Cluster Fuzzy & C-Means dengan data dan Nilai Bobot awal dinamis</pre>");
+print("<pre>Proses Cluster Fuzzy & C-Means dengan data dan Nilai Bobot Statis</pre>");
 
 ?>
 

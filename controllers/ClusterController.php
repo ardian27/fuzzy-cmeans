@@ -73,6 +73,169 @@ class ClusterController extends Controller
             ]);
         }
     }
+    public function actionProsesDefault()
+    {
+        $request = Yii::$app->request;
+        $model = new Cluster();
+
+        if ($request->isAjax) {
+            /*
+            *   Process for ajax request
+            */
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            if ($request->isGet) {
+                return [
+                    'title' => "Tambah Data Proses Kluster Baru",
+                    'content' => $this->renderAjax('create', [
+                        'model' => $model,
+                    ]),
+                    'footer' => Html::button('Kembali', ['class' => 'btn btn-default pull-left', 'data-dismiss' => "modal"]) .
+                        Html::button('Simpan', ['class' => 'btn btn-primary', 'type' => "submit"])
+
+                ];
+            } else if ($model->load($request->post()) && $model->save()) {
+
+
+
+                return $this->redirect(['detail/index']);
+            } else {
+                return [
+                    'title' => "Tambah Data Kluster",
+                    'content' => $this->renderAjax('create', [
+                        'model' => $model,
+                    ]),
+                    'footer' => Html::button('Kembali', ['class' => 'btn btn-default pull-left', 'data-dismiss' => "modal"]) .
+                        Html::button('Simpan', ['class' => 'btn btn-primary', 'type' => "submit"])
+
+                ];
+            }
+        } else {
+            /*
+            *   Process for non-ajax request
+            */
+            if ($model->load($request->post()) && $model->save()) {
+
+                $max_iterasi = $model->max_iterasi;
+                $min_error = $model->min_error;
+
+
+                $nilai = Nilai::find()
+                    ->select('nim, nilai')
+                    ->asArray()
+                    ->limit(580)
+                    ->all();
+
+                $result = array();
+                $results = array();
+                $a = 0;
+
+
+                foreach ($nilai as $element) {
+                    $result[$element['nim']][] = $element['nilai'];
+                }
+
+                $results = array_values($result);
+ 
+
+                $output =  startFCMStatis($results, $max_iterasi, $min_error);
+
+                 
+                $hasil = array();
+ 
+                 
+                return $this->render('gas', [
+                    'data' => $output,
+                ]);
+            } else {
+                return $this->render('createstatis', [
+                    'model' => $model,
+                ]);
+            }
+        }
+    }
+
+    public function actionProses()
+    {
+        $request = Yii::$app->request;
+        $model = new Cluster();
+
+        if ($request->isAjax) {
+            /*
+            *   Process for ajax request
+            */
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            if ($request->isGet) {
+                return [
+                    'title' => "Tambah Data Proses Kluster Baru",
+                    'content' => $this->renderAjax('create', [
+                        'model' => $model,
+                    ]),
+                    'footer' => Html::button('Kembali', ['class' => 'btn btn-default pull-left', 'data-dismiss' => "modal"]) .
+                        Html::button('Simpan', ['class' => 'btn btn-primary', 'type' => "submit"])
+
+                ];
+            } else if ($model->load($request->post()) && $model->save()) {
+                return $this->redirect(['detail/index']);
+            } else {
+                return [
+                    'title' => "Tambah Data Kluster",
+                    'content' => $this->renderAjax('create', [
+                        'model' => $model,
+                    ]),
+                    'footer' => Html::button('Kembali', ['class' => 'btn btn-default pull-left', 'data-dismiss' => "modal"]) .
+                        Html::button('Simpan', ['class' => 'btn btn-primary', 'type' => "submit"])
+
+                ];
+            }
+        } else {
+            /*
+            *   Process for non-ajax request
+            */
+            if ($model->load($request->post()) && $model->save()) {
+
+                $max_iterasi = $model->max_iterasi;
+                $min_error = $model->min_error;
+
+
+                $nilai = Nilai::find()
+                    ->select('nim, nilai')
+                    ->asArray()
+                    ->all();
+
+                $result = array();
+                $results = array();
+                $a = 0;
+
+
+                foreach ($nilai as $element) {
+                    $result[$element['nim']][] = $element['nilai'];
+                }
+
+                $results = array_values($result);
+ 
+
+                $output =  startFCM($results, $max_iterasi, $min_error);
+
+                 
+                $hasil = array();
+
+                $data = array(
+                    array(100, 100, 100, 100, 100, 98, 100, 99, 90, 82),
+                    array(89, 76, 80, 85, 78, 98, 76, 80, 90, 59),
+                    array(87, 75, 80, 85, 78, 98, 76, 80, 90, 78),
+                    array(75, 82, 80, 85, 78, 98, 76, 80, 90, 98),
+                );
+                 
+                return $this->render('gas2', [
+                    'data' => $output,
+                ]);
+            } else {
+                return $this->render('create', [
+                    'model' => $model,
+                ]);
+            }
+        }
+    }
 
     /**
      * Creates a new Cluster model.
@@ -128,29 +291,31 @@ class ClusterController extends Controller
                 );
                 $datafix = $clusterizer->clusterize();
 
-                $id_cluster=Cluster::find()->max('id_cluster');
+                $id_cluster = Cluster::find()->max('id_cluster');
 
-                $datainsert=array();
+                $datainsert = array();
                 foreach ($datafix as $key => $value) {
                     foreach ($value as $key => $nilai) {
-                        $datainsert[]=[
-                            'id_cluster'=>$id_cluster,
-                            'nim'=>$key,
-                            'hasil'=>$nilai[0][1]
+                        $datainsert[] = [
+                            'id_cluster' => $id_cluster,
+                            'nim' => $key,
+                            'hasil' => $nilai[0][1]
                         ];
                     }
                 }
 
-                if(count($datainsert)>0){
-                    $columnNameArray=['id_cluster','nim','hasil'];
+                if (count($datainsert) > 0) {
+                    $columnNameArray = ['id_cluster', 'nim', 'hasil'];
                     // below line insert all your record and return number of rows inserted
                     $insertCount = Yii::$app->db->createCommand()
-                                   ->batchInsert(
-                                         'cluster_detail', $columnNameArray, $datainsert
-                                     )
-                                   ->execute();
+                        ->batchInsert(
+                            'cluster_detail',
+                            $columnNameArray,
+                            $datainsert
+                        )
+                        ->execute();
                 }
-                
+
 
                 return $this->redirect(['detail/index']);
             } else {
@@ -264,6 +429,13 @@ class ClusterController extends Controller
         }
     }
 
+    public function actionPanduan()
+    {
+        
+        return $this->render('panduan');
+        
+    }
+
     /**
      * Delete multiple existing Cluster model.
      * For ajax request will return json object
@@ -310,77 +482,447 @@ class ClusterController extends Controller
         }
     }
 }
-
-class CMeansClusterizer
+function startFCMStatis($data, $max_iterasi, $max_error)
 {
-    public function __construct($data, $n_clusters, $n_iterations, $fuzziness, $min_error)
-    {
-        $this->data = $data;
-        $this->n_clusters = $n_clusters;
-        $this->n_iterations = $n_iterations;
-        $this->fuzziness = $fuzziness;
-        $this->min_error = $min_error;
-        $this->initialize();
-    }
-    private function initialize()
-    {
-        $this->features = array_keys(reset($this->data));
-        $this->membership_degrees = [];
-        foreach ($this->data as $key => $value) {
-            $this->membership_degrees[$key] = [];
-            for ($i = 0; $i < $this->n_clusters; ++$i) {
-                $this->membership_degrees[$key][$i] = rand(0, 10) / 10;
-            }
-        }
-    }
-    private function compute_centroids()
-    {
-        for ($i = 0; $i < $this->n_clusters; $i++) {
-            foreach ($this->features as $feature) {
-                $num = 0;
-                $den = 0;
-                foreach ($this->membership_degrees as $key => $membership_degree) {
-                    $num += pow($membership_degree[$i], $this->fuzziness) * $this->data[$key][$feature];
-                    $den += pow($membership_degree[$i], $this->fuzziness);
-                }
-                $this->centroids[$i][$feature] = $num / $den;
-            }
-        }
-    }
-    private function distance($vec_a, $vec_b, $keys)
-    {
-        $total = 0;
-        foreach ($keys as $key) {
-            $total += pow($vec_a[$key] - $vec_b[$key], 2);
-        }
-        return sqrt($total);
-    }
-    private function update_membership_degrees()
-    {
-        foreach ($this->membership_degrees as $key => $membership_degree) {
-            for ($i = 0; $i < $this->n_clusters; $i++) {
-                $total = 0.0;
-                for ($j = 0; $j < $this->n_clusters; $j++) {
+    $w = sizeof($data);
+    $h = sizeof($data[0]);
 
-                    $total += pow(
-                        $this->distance($this->data[$key], $this->centroids[$i], $this->features) /
-                            $this->distance($this->data[$key], $this->centroids[$j], $this->features),
-                        2.0 / ($this->fuzziness - 1.0)
-                    );
-                }
-                $this->membership_degrees[$key][$i] = 1.0 / $total;
-            }
-        }
-    }
-    public function clusterize()
-    {
-        for ($i = 0; $i < $this->n_iterations; ++$i) {
+    $r1 = array(
+        0.753,
+        0.671,
+        0.286,
+        0.893,
+        0.822,
+        0.742,
+        0.170,
+        0.098,
+        0.881,
+        0.151,
+        0.308,
+        0.463,
+        0.822,
+        0.252,
+        0.455,
+        0.586,
+        0.237,
+        0.468,
+        0.431,
+        0.734
+    );
+    $r2 = array(
+        0.606,
+        0.306,
+        0.556,
+        0.898,
+        0.239,
+        0.222,
+        0.869,
+        0.498,
+        0.814,
+        0.378,
+        0.389,
+        0.610,
+        0.528,
+        0.793,
+        0.884,
+        0.389,
+        0.767,
+        0.716,
+        0.707,
+        0.479
+    );
+    // Nilai Partisi Awal
+    $partisiawalC1 = $r1;
+    $partisiawalC2 = $r2;
+    //  $partisiawalC1 = getRandom($h);
+    //  $partisiawalC2 = getRandom($h);
 
-            $this->compute_centroids();
-            $this->update_membership_degrees();
+
+    $pusat_cluster1 = pusatCluster($data, $partisiawalC1);
+    $pusat_cluster2 = pusatCluster($data, $partisiawalC2);
+
+    // Hasil bagi dengan pow2 & nilai pow2 partisi 1
+    $hasilbagi1 = $pusat_cluster1[0];
+    $pow_partisi1 = $pusat_cluster1[1];
+
+    // Hasil bagi dengan pow2 & nilai pow2 partisi 2
+    $hasilbagi2 = $pusat_cluster2[0];
+    $pow_partisi2 = $pusat_cluster2[1];
+
+    $fungsi_objectif = getFungsiObjectifStatis($data, $pow_partisi1, $pow_partisi2, $hasilbagi1, $hasilbagi2);
+
+    $new_pusat_cluster1 = array();
+    $new_pusat_cluster2 = array();
+    $new_hasilbagi1 = array();
+    $new_hasilbagi2 = array();
+    $new_pow_partisi1 = array();
+    $new_pow_partisi2 = array();
+    $new_fungsi_objectif = array();
+
+    $data_fungsi_objektif = array();
+    $partisi_baru1 = array();
+    $partisi_baru2 = array();
+    $sum_objektif = array();
+    $error = array();
+
+    array_push($data_fungsi_objektif, $fungsi_objectif);
+    array_push($partisi_baru1, $fungsi_objectif[0]);
+    array_push($partisi_baru2, $fungsi_objectif[1]);
+    array_push($sum_objektif, $fungsi_objectif[2]);
+
+    
+
+
+    for ($i = 0; $i < $max_iterasi - 1; $i++) {
+
+        if ($i == 0) {
+            $new_pusat_cluster1[$i] = pusatCluster($data, $partisi_baru1[$i]);
+            $new_pusat_cluster2[$i] = pusatCluster($data, $partisi_baru2[$i]);
+
+            $new_hasilbagi1[$i] = $new_pusat_cluster1[$i][0];
+            $new_hasilbagi2[$i] = $new_pusat_cluster2[$i][0];
+
+            $new_pow_partisi1[$i] = $new_pusat_cluster1[$i][1];
+            $new_pow_partisi2[$i] = $new_pusat_cluster2[$i][1];
+
+            $x1 = getFungsiObjectif($data, $new_pow_partisi1[$i], $new_pow_partisi2[$i], $new_hasilbagi1[$i], $new_hasilbagi2[$i]);
+
+
+            array_push($partisi_baru1, $x1[0]);
+            array_push($partisi_baru2, $x1[1]);
+            array_push($sum_objektif, $x1[2]);
+        } else if (abs($sum_objektif[$i] - $sum_objektif[$i - 1]) <= $max_error) {
+            break;
+        } else {
+            $new_pusat_cluster1[$i] = pusatCluster($data, $partisi_baru1[$i]);
+            $new_pusat_cluster2[$i] = pusatCluster($data, $partisi_baru2[$i]);
+
+            $new_hasilbagi1[$i] = $new_pusat_cluster1[$i][0];
+            $new_hasilbagi2[$i] = $new_pusat_cluster2[$i][0];
+
+            $new_pow_partisi1[$i] = $new_pusat_cluster1[$i][1];
+            $new_pow_partisi2[$i] = $new_pusat_cluster2[$i][1];
+
+            $x2 = getFungsiObjectif($data, $new_pow_partisi1[$i], $new_pow_partisi2[$i], $new_hasilbagi1[$i], $new_hasilbagi2[$i]);
+
+
+            array_push($partisi_baru1, $x2[0]);
+            array_push($partisi_baru2, $x2[1]);
+            array_push($sum_objektif, $x2[2]);
         }
-        // OFF ON
-        // return ["centroids" => $this->centroids, "membership_degrees" => $this->membership_degrees];
-        return ["membership_degrees" => $this->membership_degrees];
     }
+
+    $random_statis1= $partisiawalC1 ;
+    $random_statis2= $partisiawalC2 ;
+    $pow_nilai_u1=array_merge($pow_partisi1,$new_pow_partisi1);
+    $pow_nilai_u2=array_merge($pow_partisi2,$new_pow_partisi2);
+    $pusat_clusterr1=array_merge($hasilbagi1,$new_hasilbagi1);
+    $pusat_clusterr2=array_merge($hasilbagi2,$new_hasilbagi2);
+// nilai random1, nilai random 2 
+    $panjang_iterasi=sizeof($sum_objektif)-1;
+    return [$random_statis1,$random_statis2,$pow_nilai_u1,$pow_nilai_u2,$pusat_clusterr1,$pusat_clusterr2,$sum_objektif,$partisi_baru1[$panjang_iterasi],$partisi_baru2[$panjang_iterasi],$partisi_baru1,$partisi_baru2];
 }
+
+function startFCM($data, $max_iterasi, $max_error)
+{
+    $w = sizeof($data);
+    $h = sizeof($data[0]);
+
+     
+    // Nilai Partisi Awal
+    // $partisiawalC1 = $r1;
+    // $partisiawalC2 = $r2;
+     $partisiawalC1 = getRandom($h);
+     $partisiawalC2 = getRandom($h);
+
+
+    $pusat_cluster1 = pusatCluster($data, $partisiawalC1);
+    $pusat_cluster2 = pusatCluster($data, $partisiawalC2);
+
+    // Hasil bagi dengan pow2 & nilai pow2 partisi 1
+    $hasilbagi1 = $pusat_cluster1[0];
+    $pow_partisi1 = $pusat_cluster1[1];
+
+    // Hasil bagi dengan pow2 & nilai pow2 partisi 2
+    $hasilbagi2 = $pusat_cluster2[0];
+    $pow_partisi2 = $pusat_cluster2[1];
+
+    $fungsi_objectif = getFungsiObjectif($data, $pow_partisi1, $pow_partisi2, $hasilbagi1, $hasilbagi2);
+
+    $new_pusat_cluster1 = array();
+    $new_pusat_cluster2 = array();
+    $new_hasilbagi1 = array();
+    $new_hasilbagi2 = array();
+    $new_pow_partisi1 = array();
+    $new_pow_partisi2 = array();
+    $new_fungsi_objectif = array();
+
+    $data_fungsi_objektif = array();
+    $partisi_baru1 = array();
+    $partisi_baru2 = array();
+    $sum_objektif = array();
+    $error = array();
+
+    array_push($data_fungsi_objektif, $fungsi_objectif);
+    array_push($partisi_baru1, $fungsi_objectif[0]);
+    array_push($partisi_baru2, $fungsi_objectif[1]);
+    array_push($sum_objektif, $fungsi_objectif[2]);
+
+
+    for ($i = 0; $i < $max_iterasi - 1; $i++) {
+
+        if ($i == 0) {
+            $new_pusat_cluster1[$i] = pusatCluster($data, $partisi_baru1[$i]);
+            $new_pusat_cluster2[$i] = pusatCluster($data, $partisi_baru2[$i]);
+
+            $new_hasilbagi1[$i] = $new_pusat_cluster1[$i][0];
+            $new_hasilbagi2[$i] = $new_pusat_cluster2[$i][0];
+
+            $new_pow_partisi1[$i] = $new_pusat_cluster1[$i][1];
+            $new_pow_partisi2[$i] = $new_pusat_cluster2[$i][1];
+
+            $x = getFungsiObjectif($data, $new_pow_partisi1[$i], $new_pow_partisi2[$i], $new_hasilbagi1[$i], $new_hasilbagi2[$i]);
+
+
+            array_push($partisi_baru1, $x[0]);
+            array_push($partisi_baru2, $x[1]);
+            array_push($sum_objektif, $x[2]);
+        } else if (abs($sum_objektif[$i] - $sum_objektif[$i - 1]) <= $max_error) {
+            break;
+        } else {
+            $new_pusat_cluster1[$i] = pusatCluster($data, $partisi_baru1[$i]);
+            $new_pusat_cluster2[$i] = pusatCluster($data, $partisi_baru2[$i]);
+
+            $new_hasilbagi1[$i] = $new_pusat_cluster1[$i][0];
+            $new_hasilbagi2[$i] = $new_pusat_cluster2[$i][0];
+
+            $new_pow_partisi1[$i] = $new_pusat_cluster1[$i][1];
+            $new_pow_partisi2[$i] = $new_pusat_cluster2[$i][1];
+
+            $x = getFungsiObjectif($data, $new_pow_partisi1[$i], $new_pow_partisi2[$i], $new_hasilbagi1[$i], $new_hasilbagi2[$i]);
+
+
+            array_push($partisi_baru1, $x[0]);
+            array_push($partisi_baru2, $x[1]);
+            array_push($sum_objektif, $x[2]);
+        }
+    }
+
+
+    $random_statis1= $partisiawalC1 ;
+    $random_statis2= $partisiawalC2 ;
+    $pow_nilai_u1=array_merge($pow_partisi1,$new_pow_partisi1);
+    $pow_nilai_u2=array_merge($pow_partisi2,$new_pow_partisi2);
+    $pusat_clusterr1=array_merge($hasilbagi1,$new_hasilbagi1);
+    $pusat_clusterr2=array_merge($hasilbagi2,$new_hasilbagi2);
+// nilai random1, nilai random 2 
+    $panjang_iterasi=sizeof($sum_objektif)-1;
+    return [$random_statis1,$random_statis2,$pow_nilai_u1,$pow_nilai_u2,$pusat_clusterr1,$pusat_clusterr2,$sum_objektif,$partisi_baru1[$panjang_iterasi],$partisi_baru2[$panjang_iterasi],$partisi_baru1,$partisi_baru2];
+}
+
+
+function  getRandom($width)
+{
+    $datarandom = array();
+    for ($a = 0; $a < $width; $a++) {
+        $datarandom[$a] =  rand(0, 999) / 999;
+    }
+
+    return $datarandom;
+}
+
+function power_2($data_array,  $height)
+{
+
+    $hasil = array();
+
+    for ($a = 0; $a < $height; $a++) {
+        $hasil[$a] = $data_array[$a] * $data_array[$a];
+    }
+    return $hasil;
+}
+
+function pusatCluster($data, $matrik_partisi)
+{
+    $w = sizeof($data[0]);
+    $h = sizeof($data);
+    $pow_matrik_partisi = power_2($matrik_partisi, $h);
+
+    $hasil = array();
+    $hasilsum = array();
+    $hasilbagi = array();
+
+    for ($a = 0; $a < $h; $a++) {
+        for ($b = 0; $b < $w; $b++) {
+            $hasil[$a][$b] = $data[$a][$b]  * $pow_matrik_partisi[$a];
+        }
+    }
+    foreach ($hasil as $value) {
+        foreach ($value as $key => $number) {
+            (!isset($hasilsum[$key])) ?
+                $hasilsum[$key] = $number : $hasilsum[$key] += $number;
+        }
+    }
+    $sumpartisi = array_sum($pow_matrik_partisi);
+    // echo $sumpartisi;
+    for ($i = 0; $i < $w; $i++) {
+        $hasilbagi[$i] = $hasilsum[$i] / $sumpartisi;
+    }
+    return
+        [
+            // $data,
+            // $pow_matrik_partisi,
+            // $hasil,
+            // $hasilsum,
+            // $hasilbagi
+            $hasilbagi,
+            $pow_matrik_partisi
+        ]
+        // $hasilbagi
+    ;
+}
+
+function getSumPusatCluster($data_array)
+{
+    $hasil = array_sum($data_array);
+    return $hasil;
+}
+
+function getFungsiObjectif($data, $matrixpow1, $matrixpow2, $matrikpusatcluster1, $matrikpusatcluster2)
+{
+    $w = sizeof($data[0]);
+        $h = sizeof($data);
+        $hasil = array();
+        $new_matrik_partisi1 = $matrixpow1;
+        $new_matrik_partisi2 = $matrixpow2;
+        $matrik_hasilchildsum1 = getChildFungsiObjectif($data, $matrikpusatcluster1);
+        $hasil_sumchild1 = $matrik_hasilchildsum1[1];
+        $hasil_sumkalichild1 = $matrik_hasilchildsum1[0];
+        $matrik_hasilchildsum2 = getChildFungsiObjectif($data, $matrikpusatcluster2);
+        $hasil_sumchild2 = $matrik_hasilchildsum2[1];
+        $hasil_sumkalichild2 = $matrik_hasilchildsum2[0];
+        $matrik_hasilkalichildsum1 = array();
+        $matrik_hasilkalichildsum2 = array();
+        $matrik_hasilkalichildsumMin1 = array();
+        $matrik_hasilkalichildsumMin1 = array();
+        $hasil1 = array();
+        $hasil2 = array();
+        $partisibaru1 = array();
+        $partisibaru2 = array();
+
+        for ($a = 0; $a < $h; $a++) {
+            $matrik_hasilkalichildsum1[$a] = ($hasil_sumkalichild1[$a] * $new_matrik_partisi1[$a]);
+            $matrik_hasilkalichildsum2[$a] = ($hasil_sumkalichild2[$a] * $new_matrik_partisi2[$a]);
+
+            $matrik_hasilkalichildsumMin1[$a] = pow($hasil_sumkalichild1[$a], -1);
+            $matrik_hasilkalichildsumMin2[$a] = pow($hasil_sumkalichild2[$a], -1);
+        }
+
+        for ($a = 0; $a < $h; $a++) {
+            $hasil1[$a] =  $matrik_hasilkalichildsum1[$a] + $matrik_hasilkalichildsum2[$a];
+            $hasil2[$a] = ($matrik_hasilkalichildsumMin1[$a] + $matrik_hasilkalichildsumMin2[$a]);
+        }
+
+        for ($a = 0; $a < $h; $a++) {
+            $partisibaru1[$a] =  $matrik_hasilkalichildsumMin1[$a] / $hasil2[$a];
+            $partisibaru2[$a] =  $matrik_hasilkalichildsumMin2[$a] / $hasil2[$a];
+        }
+
+
+
+        return
+            [
+                $partisibaru1,
+                $partisibaru2,
+                array_sum($hasil1)
+            ];
+}
+
+function getFungsiObjectifStatis($data, $matrixpow1, $matrixpow2, $matrikpusatcluster1, $matrikpusatcluster2)
+{
+    $w = sizeof($data[0]);
+        $h = sizeof($data);
+        $hasil = array();
+        $new_matrik_partisi1 = $matrixpow1;
+        $new_matrik_partisi2 = $matrixpow2;
+        $matrik_hasilchildsum1 = getChildFungsiObjectif($data, $matrikpusatcluster1);
+        $hasil_sumchild1 = $matrik_hasilchildsum1[1];
+        $hasil_sumkalichild1 = $matrik_hasilchildsum1[0];
+        $matrik_hasilchildsum2 = getChildFungsiObjectif($data, $matrikpusatcluster2);
+        $hasil_sumchild2 = $matrik_hasilchildsum2[1];
+        $hasil_sumkalichild2 = $matrik_hasilchildsum2[0];
+        $matrik_hasilkalichildsum1 = array();
+        $matrik_hasilkalichildsum2 = array();
+        $matrik_hasilkalichildsumMin1 = array();
+        $matrik_hasilkalichildsumMin1 = array();
+        $hasil1 = array();
+        $hasil2 = array();
+        $partisibaru1 = array();
+        $partisibaru2 = array();
+
+        for ($a = 0; $a < $h; $a++) {
+            $matrik_hasilkalichildsum1[$a] = ($hasil_sumkalichild1[$a] * $new_matrik_partisi1[$a]);
+            $matrik_hasilkalichildsum2[$a] = ($hasil_sumkalichild2[$a] * $new_matrik_partisi2[$a]);
+
+            $matrik_hasilkalichildsumMin1[$a] = pow($hasil_sumkalichild1[$a], -1);
+            $matrik_hasilkalichildsumMin2[$a] = pow($hasil_sumkalichild2[$a], -1);
+        }
+
+        for ($a = 0; $a < $h; $a++) {
+            $hasil1[$a] =  $matrik_hasilkalichildsum1[$a] + $matrik_hasilkalichildsum2[$a];
+            $hasil2[$a] = ($matrik_hasilkalichildsumMin1[$a] + $matrik_hasilkalichildsumMin2[$a]);
+        }
+
+        for ($a = 0; $a < $h; $a++) {
+            $partisibaru1[$a] =  $matrik_hasilkalichildsumMin1[$a] / $hasil2[$a];
+            $partisibaru2[$a] =  $matrik_hasilkalichildsumMin2[$a] / $hasil2[$a];
+        }
+
+
+
+        return
+            [
+                $partisibaru1,
+                $partisibaru2,
+                array_sum($hasil1)
+            ];
+}
+
+function getChildFungsiObjectif($data, $matrikpusatcluster)
+{
+
+    $w = sizeof($data[0]);
+    $h = sizeof($data);
+    $index = array();
+    $hasil = array();
+    $hasilsum = array();
+
+    for ($a = 0; $a < $h; $a++) {
+        for ($b = 0; $b < $w; $b++) {
+            $hasil[$a][$b] =  pow(($data[$a][$b] - $matrikpusatcluster[$b]), 2);
+            // echo $hasil[$a][$b]."======";
+        }
+    }
+
+    foreach ($hasil as $key => $value) {
+        $hasilsum[$key] = array_sum($value);
+    }
+     
+
+    return [$hasilsum, $hasil];
+}
+
+ 
+
+function round_4($nilai)
+{
+    return round($nilai, 4);
+}
+
+function round_6($nilai)
+{
+    return round($nilai, 6);
+}
+
+
+ 
